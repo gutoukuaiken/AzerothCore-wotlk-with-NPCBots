@@ -258,6 +258,34 @@ void BotMgr::Update(uint32 diff)
     }
 }
 
+bool BotMgr::IsMapAllowedForBots(Map const* map) const
+{
+    if ((!_enableNpcBotsBGs && map->IsBattleground()) ||
+        (!_enableNpcBotsArenas && map->IsBattleArena()) ||
+        (!_enableNpcBotsDungeons && map->IsNonRaidDungeon()) ||
+        (!_enableNpcBotsRaids && map->IsRaid()))
+        return false;
+
+    if (map->IsDungeon() && !_disabled_instance_maps.empty() && std::find(_disabled_instance_maps.cbegin(), _disabled_instance_maps.cend(), map->GetId()) != _disabled_instance_maps.cend())
+        return false;
+
+    return true;
+}
+
+bool BotMgr::IsBotAllowedInMapZoneArea(Player const* player) const
+{
+    uint32 currentMap = player->GetMapId(); 
+    uint32 currentZone = player->GetZoneId();
+    uint32 currentArea = player->GetAreaId();
+
+    if (currentMap == 0 && currentZone == 33 && currentArea == 2177)
+        return false;
+
+    if (currentMap == 0 && currentZone == 33 && currentArea == 1741)
+        return false;
+    return true;
+}
+
 bool BotMgr::RestrictBots(Creature const* bot, bool add) const
 {
     if (!_owner->FindMap())
@@ -272,6 +300,9 @@ bool BotMgr::RestrictBots(Creature const* bot, bool add) const
     Map const* currMap = _owner->GetMap();
 
     if (!BotCfg::IsMapAllowedForBots(currMap))
+        return true;
+
+     if (!IsBotAllowedInMapZoneArea(_owner))                --添加内容
         return true;
 
     if (LimitBots(currMap))
